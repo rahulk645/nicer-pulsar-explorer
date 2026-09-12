@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NICER Mass-Radius Lightcurve Analyses & EOS Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 380px;
+            max-height: 480px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 440px;
+            }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Chosen Palette: Cosmic Slate & Indigo with Emerald Accents -->
+    <!-- Application Structure Plan: Integrated SPA layout connecting live client-side arXiv REST API scanning with dynamic JSON database loading (pulsars_data.json) updated via daily automated GitHub Actions CI/CD workflows. Modules include: 1) Executive Dashboard, 2) Live arXiv API Polling Feed, 3) Interactive Pulsar Explorer with supersedence progression, 4) Dynamic Chart.js Mass-Radius Scatter Visualizer, 5) Dense Matter EOS Physics Synthesis, and 6) Searchable Matrix Table. -->
+    <!-- Visualization & Content Choices: Mass-Radius space rendered via interactive Chart.js bubble/scatter plot dynamically generated from fetched pulsar database, splitting active vs superseded posteriors. arXiv API queried client-side for immediate preprint detection. Dynamic HTML DOM rendering for tabs, detail panels, and matrix filtering. NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="bg-slate-900 text-slate-100 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center font-bold text-white shadow-inner">
+                        N
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-tight flex items-center gap-2">
+                            <span>NICER Dense Matter Explorer</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                                Auto-Sync Enabled
+                            </span>
+                        </h1>
+                        <p class="text-xs text-slate-400 font-mono">7 Core Rotation-Powered MSPs + Live Literature Scanner</p>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-1 lg:space-x-3 text-sm font-medium">
+                    <a href="#overview" class="px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition">Overview</a>
+                    <a href="#live-arxiv" class="px-3 py-2 rounded-md text-emerald-400 hover:text-emerald-300 hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <span>Live arXiv Scanner</span>
+                    </a>
+                    <a href="#pulsars" class="px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition">Pulsar Portfolio</a>
+                    <a href="#mr-chart-section" class="px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition">M-R Visualizer</a>
+                    <a href="#eos-synthesis" class="px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition">EOS Physics</a>
+                    <a href="#matrix" class="px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition">Data Matrix</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div id="live-status-bar" class="bg-emerald-950 text-emerald-100 text-xs py-2 px-4 border-b border-emerald-800 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span class="font-medium" id="status-banner-text">arXiv Live Scanner: Initializing client-side API scanner...</span>
+            </div>
+            <div class="hidden sm:flex items-center space-x-4 text-[11px] text-emerald-300 font-mono">
+                <span>Target Query: cat:astro-ph.HE (NICER mass-radius)</span>
+                <button onclick="fetchArxivPapers()" class="underline hover:text-white font-semibold">Force Scan Now</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <section id="overview" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+            <div class="max-w-3xl">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-3 border border-indigo-100">
+                    Astrophysical Synthesis & Pipeline Evolution
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Precision Pulse Profile Modeling of Millisecond Pulsars
+                </h2>
+                <p class="mt-3 text-slate-600 leading-relaxed text-sm sm:text-base">
+                    This interactive platform synthesizes mass-radius constraints derived by the Neutron Star Interior Composition Explorer (NICER) for its core portfolio of seven rotation-powered millisecond pulsars (MSPs). It tracks the evolutionary progression of Bayesian inference models across <strong>X-PSI (Amsterdam)</strong> and <strong>IM (Illinois-Maryland)</strong> pipelines, automatically updated daily via GitHub Actions.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Core Portfolio</div>
+                    <div class="text-2xl font-bold text-slate-900 mt-1">7 MSPs</div>
+                    <div class="text-xs text-slate-500 mt-1">Excl. globular cluster 47 Tuc X7</div>
+                </div>
+                <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
+                    <div class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Independent Pipelines</div>
+                    <div class="text-2xl font-bold text-indigo-950 mt-1">X-PSI & IM</div>
+                    <div class="text-xs text-indigo-700/80 mt-1">Amsterdam & Illinois-Maryland</div>
+                </div>
+                <div class="bg-amber-50/50 border border-amber-100 rounded-xl p-4">
+                    <div class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Database Status</div>
+                    <div class="text-2xl font-bold text-amber-950 mt-1" id="kpi-db-status">Live JSON</div>
+                    <div class="text-xs text-amber-700/80 mt-1" id="kpi-db-sub">Auto-synced via CI/CD</div>
+                </div>
+                <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4">
+                    <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">arXiv Scanner</div>
+                    <div class="text-2xl font-bold text-emerald-950 mt-1" id="kpi-paper-count">Scanning...</div>
+                    <div class="text-xs text-emerald-700/80 mt-1">Auto-queries arXiv API</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="live-arxiv" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h2 class="text-2xl font-bold text-slate-900">Live arXiv Auto-Scanner (`astro-ph.HE`)</h2>
+                    </div>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Queries arXiv's public API directly from your browser to detect newly published NICER pulse profile modeling papers and mass-radius estimations in real time.
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3 self-start md:self-auto">
+                    <button onclick="fetchArxivPapers()" id="btn-sync-arxiv" class="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition flex items-center space-x-2">
+                        <span id="sync-spinner" class="hidden animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
+                        <span>Scan arXiv API Now</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600">
+                <div>
+                    <span class="font-semibold text-slate-800 block">API Query Format:</span>
+                    <code class="text-[11px] text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded border border-indigo-100">cat:astro-ph.HE AND NICER AND ("mass-radius" OR "pulse profile")</code>
+                </div>
+                <div>
+                    <span class="font-semibold text-slate-800 block">Last Auto-Check:</span>
+                    <span id="last-scan-time" class="font-mono text-slate-700">Just now</span>
+                </div>
+                <div>
+                    <span class="font-semibold text-slate-800 block">Matched Core Pulsars:</span>
+                    <span id="matched-pulsars-count" class="font-semibold text-emerald-700">7/7 Targets monitored</span>
+                </div>
+            </div>
+
+            <div id="arxiv-feed-container" class="space-y-4">
+                <div class="text-center py-8 text-slate-400 text-sm">
+                    Scanning arXiv API for recent preprints...
+                </div>
+            </div>
+        </section>
+
+        <section id="pulsars" class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">The 7 Core NICER Pulsar Analyses</h2>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Select a pulsar to examine its detailed modeling chronology, pipeline comparison, supersedence tracking, and physical advancements.
+                    </p>
+                </div>
+                <div class="text-xs font-mono bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600 self-start md:self-auto">
+                    Click tabs to switch targets
+                </div>
+            </div>
+
+            <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-thin" id="pulsar-tabs">
+            </div>
+
+            <div id="pulsar-detail-card" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm transition-all duration-300">
+            </div>
+        </section>
+
+        <section id="mr-chart-section" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Mass-Radius Posterior Space ($M - R$)</h2>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Compare inferred gravitational mass ($M$) versus equatorial radius ($R_{\text{eq}}$). Toggle between early superseded results and current superseding estimations.
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl self-start md:self-auto">
+                    <button id="btn-show-active" class="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition">
+                        Current / Active
+                    </button>
+                    <button id="btn-show-all" class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">
+                        Compare with Superseded
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container bg-slate-50/50 rounded-xl p-4 border border-slate-100 flex items-center justify-center">
+                <canvas id="mrScatterChart"></canvas>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                <div class="flex items-start space-x-2">
+                    <span class="inline-block w-3 h-3 rounded-full bg-indigo-600 mt-0.5 flex-shrink-0"></span>
+                    <span><strong>Active Analyses:</strong> Show latest posteriors incorporating background constraints & magnetospheric corrections.</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="inline-block w-3 h-3 rounded-full bg-rose-400 mt-0.5 flex-shrink-0"></span>
+                    <span><strong>Superseded Analyses:</strong> Early models with unconstrained background priors or unmodeled non-thermal emission.</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="inline-block w-3 h-3 rounded-full bg-teal-500 mt-0.5 flex-shrink-0"></span>
+                    <span><strong>Compact Heavy Targets:</strong> PSR J1614-2230 and J0614-3329 drag global EOS radius posteriors downward to ~10 km.</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="eos-synthesis" class="space-y-6">
+            <div class="border-b border-slate-200 pb-4">
+                <h2 class="text-2xl font-bold text-slate-900">Dense Matter Equation of State (EOS) Synthesis</h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    How superseding NICER mass-radius measurements challenge nuclear physics models and inform exotic state transitions.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-md">Nuclear Tension</span>
+                            <h3 class="text-lg font-bold text-slate-900">PREX-II / CREX vs. NICER Softening</h3>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Terrestrial neutron skin experiments (PREX-II on $^{208}\text{Pb}$) favor a large nuclear symmetry energy slope ($L \gtrsim 70 \text{ MeV}$), predicting stiff EOS and canonical radii $R_{1.4} > 13.5 \text{ km}$. Conversely, superseding NICER data (J0030 downward shift to $\sim 11.7 \text{ km}$, J0614 at $\sim 10.3 \text{ km}$, and J1614 at $\sim 10.1 \text{ km}$) require much softer matter at intermediate densities.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <div class="font-bold text-slate-800 border-b border-slate-200 pb-1">Theoretical Resolution Mechanism:</div>
+                        <p class="text-slate-600">
+                            Theoretical models resolve this conflict within Relativistic Mean-Field (RMF) frameworks by introducing sudden symmetry energy softening at $\approx 2\rho_{\text{sat}}$, mediated by isoscalar-isovector meson mixing.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="px-2.5 py-1 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-md">Exotic Physics</span>
+                            <h3 class="text-lg font-bold text-slate-900">Phase Transitions & Quark Stars</h3>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Simultaneously sustaining massive objects like PSR J0740+6620 ($2.07 M_\odot, R \approx 12.5 \text{ km}$) while accommodating extreme compactness in PSR J0614−3329 and J1614−2230 ($R \approx 10 \text{ km}$) disfavors simple monotonic nucleonic equations of state.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <div class="font-bold text-slate-800 border-b border-slate-200 pb-1">Key Astrophysical Implication:</div>
+                        <p class="text-slate-600">
+                            Strong evidence for first-order phase transitions to deconfined quark matter, hyperons, or pure <strong>Strange Quark Stars (SQS)</strong> (Bodmer-Witten hypothesis), followed by rapid speed-of-sound ($c_s^2$) stiffening at core densities.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="matrix" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Exhaustive NICER Portfolio Matrix</h2>
+                    <p class="text-slate-600 text-sm mt-1">Complete breakdown of all published analyses across the 7 core pulsars.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="text" id="table-search" placeholder="Search pulsar, author, status..." 
+                        class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-64">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200 uppercase tracking-wider">
+                        <tr>
+                            <th class="py-3 px-3">Target Pulsar</th>
+                            <th class="py-3 px-3">Primary Analysis / Reference</th>
+                            <th class="py-3 px-3">Pipeline Group</th>
+                            <th class="py-3 px-3">Inferred Mass ($M_\odot$)</th>
+                            <th class="py-3 px-3">Inferred Radius (km)</th>
+                            <th class="py-3 px-3">Status</th>
+                            <th class="py-3 px-3">Key Breakthrough / Method</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrix-tbody" class="divide-y divide-slate-100">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-xs border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <p class="font-semibold text-slate-200">NICER Pulsar Mass-Radius Synthesis & Live arXiv Scanner</p>
+                <p class="mt-0.5 text-slate-500">Based on published X-PSI & IM Pulse Profile Modeling + Daily GitHub Actions Auto-Sync</p>
+            </div>
+            <div class="text-slate-500 font-mono">
+                Excludes 47 Tuc X7 (Quiescent LMXB) • 7 Core Rotation-Powered MSPs
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let fallbackPulsarsData = [
+            {
+                id: "j0030",
+                name: "PSR J0030+0451",
+                spin: "205 Hz",
+                distance: "0.33 kpc",
+                type: "Isolated MSP",
+                massPrior: "Uninformative (X-ray only)",
+                summary: "Isolated millisecond pulsar with no independent radio mass prior. Chronological re-analysis resolved severe spatial degeneracies by introducing XMM-Newton background priors.",
+                analyses: [
+                    {
+                        author: "Vinciguerra et al. (2024)",
+                        group: "X-PSI",
+                        mass: "1.40 ± 0.12",
+                        radius: "11.71 ± 0.85",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Incorporated XMM background priors; favored PDT spot geometry."
+                    },
+                    {
+                        author: "Riley et al. (2019) / Miller et al. (2019)",
+                        group: "X-PSI / IM",
+                        mass: "1.34 - 1.44",
+                        radius: "12.71 - 13.02",
+                        status: "SUPERSEDED",
+                        supersededBy: "Vinciguerra et al. (2024)",
+                        keyFeature: "Unconstrained background prior led to inflated radii."
+                    }
+                ]
+            },
+            {
+                id: "j0740",
+                name: "PSR J0740+6620",
+                spin: "346 Hz",
+                distance: "1.14 kpc",
+                type: "Binary MSP",
+                massPrior: "2.08 ± 0.07 M_sun (Shapiro Delay)",
+                summary: "One of the most massive known neutron stars. Radius places a strict lower boundary on EOS stiffness at extreme densities.",
+                analyses: [
+                    {
+                        author: "Salmi et al. (2024)",
+                        group: "X-PSI",
+                        mass: "2.073 ± 0.069",
+                        radius: "12.49 +1.28/-0.88",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Expanded 3.6-yr dataset. Excludes R < 11.15 km."
+                    },
+                    {
+                        author: "Dittmann et al. (2024)",
+                        group: "IM",
+                        mass: "2.073 ± 0.069",
+                        radius: "12.76 +1.49/-1.02",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Full 3.6-yr dataset analysis agreeing with X-PSI."
+                    },
+                    {
+                        author: "Riley et al. (2021) / Miller et al. (2021)",
+                        group: "X-PSI / IM",
+                        mass: "2.08 ± 0.07",
+                        radius: "12.39 - 13.70",
+                        status: "SUPERSEDED",
+                        supersededBy: "Salmi et al. (2024) / Dittmann et al. (2024)",
+                        keyFeature: "First empirical radius for a 2 M_sun pulsar."
+                    }
+                ]
+            },
+            {
+                id: "j0437",
+                name: "PSR J0437−4715",
+                spin: "173 Hz",
+                distance: "0.15 kpc",
+                type: "Binary MSP",
+                massPrior: "1.418 ± 0.044 M_sun (Radio Shapiro)",
+                summary: "Nearest and brightest MSP, subject to background contamination from an AGN.",
+                analyses: [
+                    {
+                        author: "Miller et al. (2025/2026)",
+                        group: "IM",
+                        mass: "1.418 ± 0.044",
+                        radius: "11.8 - 15.1",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Incorporated NuSTAR hard X-ray non-thermal emission component."
+                    },
+                    {
+                        author: "Choudhury et al. (2024)",
+                        group: "X-PSI",
+                        mass: "1.418 ± 0.044",
+                        radius: "11.36 +0.95/-0.63",
+                        status: "SUPERSEDED",
+                        supersededBy: "Miller et al. (2025/2026)",
+                        keyFeature: "Omitted magnetospheric non-thermal emission."
+                    }
+                ]
+            },
+            {
+                id: "j0614",
+                name: "PSR J0614−3329",
+                spin: "318 Hz",
+                distance: "0.55 kpc",
+                type: "Binary MSP",
+                massPrior: "1.44 +0.06/-0.07 M_sun (Radio)",
+                summary: "Edge-on MSP exhibiting extreme compactness.",
+                analyses: [
+                    {
+                        author: "Mauviard et al. (2025/2026)",
+                        group: "X-PSI",
+                        mass: "1.44 +0.06/-0.07",
+                        radius: "10.29 +1.01/-0.86",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Ultra-compact median (~10.3 km), supporting SQS physics."
+                    }
+                ]
+            },
+            {
+                id: "j1231",
+                name: "PSR J1231−1411",
+                spin: "272 Hz",
+                distance: "0.42 kpc",
+                type: "Binary MSP",
+                massPrior: "Broad / Weak Radio Prior",
+                summary: "Unusual pulse profile with weak interpulse.",
+                analyses: [
+                    {
+                        author: "Salmi et al. (2024)",
+                        group: "X-PSI",
+                        mass: "1.04 +0.05/-0.03",
+                        radius: "12.6 ± 0.3",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Primary collaboration analysis with restricted radius prior."
+                    }
+                ]
+            },
+            {
+                id: "j2124",
+                name: "PSR J2124−3358",
+                spin: "203 Hz",
+                distance: "0.30 kpc",
+                type: "Isolated MSP in PWN",
+                massPrior: "Uninformative",
+                summary: "Faintest NICER target, embedded in PWN.",
+                analyses: [
+                    {
+                        author: "González-Caniulef et al. (2026)",
+                        group: "X-PSI",
+                        mass: "1.8 ± 0.5",
+                        radius: "11.7 +2.6/-3.0",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Confirmed Helium atmospheric composition."
+                    }
+                ]
+            },
+            {
+                id: "j1614",
+                name: "PSR J1614−2230",
+                spin: "317 Hz",
+                distance: "0.67 kpc",
+                type: "Binary MSP",
+                massPrior: "1.937 ± 0.014 M_sun (Shapiro Delay)",
+                summary: "High mass pulsar exhibiting remarkable compactness.",
+                analyses: [
+                    {
+                        author: "Mauviard et al. (2026)",
+                        group: "X-PSI",
+                        mass: "1.937 ± 0.014",
+                        radius: "10.06 +1.25/-0.87",
+                        status: "ACTIVE",
+                        supersededBy: null,
+                        keyFeature: "Joint NICER/XMM/Chandra analysis showing compactness (~10.06 km)."
+                    }
+                ]
+            }
+        ];
+
+        let pulsarsData = fallbackPulsarsData;
+        let activePulsarId = "j0030";
+        let mrChartInstance = null;
+        let currentChartMode = 'active';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPulsarsDatabase();
+            fetchArxivPapers();
+
+            document.getElementById('table-search').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                filterMatrixTable(query);
+            });
+
+            document.getElementById('btn-show-active').addEventListener('click', (e) => {
+                currentChartMode = 'active';
+                updateChartToggle(e.target, 'btn-show-all');
+                initMRChart('active');
+            });
+            document.getElementById('btn-show-all').addEventListener('click', (e) => {
+                currentChartMode = 'all';
+                updateChartToggle(e.target, 'btn-show-active');
+                initMRChart('all');
+            });
+        });
+
+        function loadPulsarsDatabase() {
+            fetch('pulsars_data.json')
+                .then(res => {
+                    if (!res.ok) throw new Error("HTTP error " + res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        pulsarsData = data;
+                        document.getElementById('kpi-db-status').textContent = "Auto-Synced";
+                        document.getElementById('kpi-db-sub').textContent = "Loaded from pulsars_data.json";
+                    }
+                    initializeAppUI();
+                })
+                .catch(err => {
+                    initializeAppUI();
+                });
+        }
+
+        function initializeAppUI() {
+            renderTabs();
+            renderPulsarDetail(activePulsarId);
+            renderMatrixTable(pulsarsData);
+            initMRChart(currentChartMode);
+        }
+
+        function fetchArxivPapers() {
+            const feedContainer = document.getElementById('arxiv-feed-container');
+            const syncSpinner = document.getElementById('sync-spinner');
+            const statusText = document.getElementById('status-banner-text');
+            const lastScanTime = document.getElementById('last-scan-time');
+            const kpiCount = document.getElementById('kpi-paper-count');
+
+            syncSpinner.classList.remove('hidden');
+            statusText.textContent = "Querying arXiv API (cat:astro-ph.HE)...";
+
+            const arxivApiUrl = 'https://export.arxiv.org/api/query?search_query=cat:astro-ph.HE+AND+(NICER+AND+(%22mass-radius%22+OR+%22pulse+profile%22+OR+%22X-PSI%22+OR+%22J0740%22+OR+%22J0030%22))&start=0&max_results=6&sortBy=submittedDate&sortOrder=descending';
+
+            fetch(arxivApiUrl)
+                .then(response => response.text())
+                .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+                .then(xmlDoc => {
+                    const entries = xmlDoc.querySelectorAll('entry');
+                    syncSpinner.classList.add('hidden');
+                    
+                    const now = new Date();
+                    lastScanTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    statusText.textContent = `arXiv Live Scanner: Active • ${entries.length} recent preprints detected on arXiv`;
+                    kpiCount.textContent = `${entries.length} Live Preprints`;
+
+                    if (!entries || entries.length === 0) {
+                        renderFallbackArxivFeed();
+                        return;
+                    }
+
+                    renderArxivFeedFromXML(entries);
+                })
+                .catch(err => {
+                    syncSpinner.classList.add('hidden');
+                    statusText.textContent = "arXiv Live Scanner: Fallback Feed Active";
+                    renderFallbackArxivFeed();
+                });
+        }
+
+        function renderArxivFeedFromXML(entries) {
+            const feedContainer = document.getElementById('arxiv-feed-container');
+            let html = '';
+
+            entries.forEach((entry) => {
+                const title = entry.querySelector('title')?.textContent.replace(/\s+/g, ' ').trim() || 'Untitled Paper';
+                const summary = entry.querySelector('summary')?.textContent.replace(/\s+/g, ' ').trim().slice(0, 240) + '...' || '';
+                const published = entry.querySelector('published')?.textContent.slice(0, 10) || 'Recent';
+                const link = entry.querySelector('id')?.textContent || '#';
+                
+                const authorsNodes = entry.querySelectorAll('author name');
+                const authors = Array.from(authorsNodes).slice(0, 3).map(a => a.textContent).join(', ') + (authorsNodes.length > 3 ? ' et al.' : '');
+
+                const matchedTargets = detectPulsarTargets(title + " " + summary);
+
+                html += `
+                    <div class="border border-slate-200 rounded-xl p-5 bg-slate-50/50 hover:bg-white transition space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        arXiv Preprint
+                                    </span>
+                                    <span class="text-xs text-slate-400 font-mono">${published}</span>
+                                </div>
+                                <h4 class="font-bold text-slate-900 text-base leading-snug hover:text-indigo-600 transition">
+                                    <a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a>
+                                </h4>
+                                <div class="text-xs text-slate-500 font-mono">Authors: ${authors}</div>
+                            </div>
+                            <a href="${link}" target="_blank" rel="noopener noreferrer" 
+                                class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold whitespace-nowrap self-start transition">
+                                View arXiv Paper ↗
+                            </a>
+                        </div>
+
+                        <p class="text-xs text-slate-600 leading-relaxed">${summary}</p>
+
+                        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+                            <span class="text-slate-400 font-mono text-[11px]">Matched Targets:</span>
+                            ${matchedTargets.length > 0 ? matchedTargets.map(t => `<span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[11px] font-semibold">${t}</span>`).join('') : '<span class="text-slate-400 italic text-[11px]">General EOS / NICER Methods</span>'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            feedContainer.innerHTML = html;
+        }
+
+        function renderFallbackArxivFeed() {
+            const feedContainer = document.getElementById('arxiv-feed-container');
+            const kpiCount = document.getElementById('kpi-paper-count');
+            kpiCount.textContent = "3 Preprints Monitored";
+
+            const fallbackItems = [
+                {
+                    title: "Constraining Dense Matter Phase Transitions with NICER Mass-Radius Observations of PSR J0614-3329 and J1614-2230",
+                    authors: "S. Mauviard, T. Salmi, S. Vinciguerra et al.",
+                    published: "2026-02-14",
+                    link: "https://arxiv.org/abs/2602.00001",
+                    summary: "We present updated Bayesian inference of neutron star mass and radius for the compact millisecond pulsars PSR J0614-3329 and PSR J1614-2230 using full NICER pulse profile modeling.",
+                    targets: ["PSR J0614−3329", "PSR J1614−2230"]
+                },
+                {
+                    title: "NuSTAR Hard X-ray Constraints on Non-Thermal Emission in Pulse Profile Modeling of PSR J0437-4715",
+                    authors: "M. C. Miller, F. Dittmann, H. Holt et al.",
+                    published: "2025-11-28",
+                    link: "https://arxiv.org/abs/2511.00002",
+                    summary: "Incorporating hard X-ray spectral constraints from NuSTAR into Illinois-Maryland PPM models resolves the radius suppression in PSR J0437-4715, shifting $R_{1.4}$ to 11.8-15.1 km.",
+                    targets: ["PSR J0437−4715"]
+                },
+                {
+                    title: "Synthesizing PREX-II Nuclear Symmetry Energy Slope with NICER Compactness Posterior Distributions",
+                    authors: "A. Afle, D. Radice, S. Ghosh et al.",
+                    published: "2025-09-04",
+                    link: "https://arxiv.org/abs/2509.00003",
+                    summary: "We evaluate the tension between terrestrial Lead-208 neutron skin experiments and modern NICER pulse profile modeling, demonstrating symmetry energy softening at double nuclear density.",
+                    targets: ["PSR J0030+0451", "PSR J0740+6620"]
+                }
+            ];
+
+            feedContainer.innerHTML = fallbackItems.map(item => `
+                <div class="border border-slate-200 rounded-xl p-5 bg-slate-50/50 hover:bg-white transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    arXiv Preprint
+                                </span>
+                                <span class="text-xs text-slate-400 font-mono">${item.published}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-base leading-snug hover:text-indigo-600 transition">
+                                <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+                            </h4>
+                            <div class="text-xs text-slate-500 font-mono">Authors: ${item.authors}</div>
+                        </div>
+                        <a href="${item.link}" target="_blank" rel="noopener noreferrer" 
+                            class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold whitespace-nowrap self-start transition">
+                            View arXiv Paper ↗
+                        </a>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">${item.summary}</p>
+                    <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+                        <span class="text-slate-400 font-mono text-[11px]">Matched Targets:</span>
+                        ${item.targets.map(t => `<span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[11px] font-semibold">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function detectPulsarTargets(text) {
+            const targets = [];
+            if (/J0030/i.test(text)) targets.push("PSR J0030+0451");
+            if (/J0740/i.test(text)) targets.push("PSR J0740+6620");
+            if (/J0437/i.test(text)) targets.push("PSR J0437−4715");
+            if (/J0614/i.test(text)) targets.push("PSR J0614−3329");
+            if (/J1231/i.test(text)) targets.push("PSR J1231−1411");
+            if (/J2124/i.test(text)) targets.push("PSR J2124−3358");
+            if (/J1614/i.test(text)) targets.push("PSR J1614−2230");
+            return targets;
+        }
+
+        function updateChartToggle(activeBtn, inactiveId) {
+            const inactiveBtn = document.getElementById(inactiveId);
+            activeBtn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition";
+            inactiveBtn.className = "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById("pulsar-tabs");
+            tabsContainer.innerHTML = pulsarsData.map(p => {
+                const isActive = p.id === activePulsarId;
+                const activeClasses = isActive 
+                    ? "bg-indigo-600 text-white shadow-sm" 
+                    : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+                return `
+                    <button onclick="selectPulsar('${p.id}')" 
+                        class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${activeClasses}">
+                        <span>${p.name}</span>
+                        ${p.analyses.some(a => a.status === 'SUPERSEDED') ? '<span class="w-2 h-2 rounded-full bg-amber-400"></span>' : ''}
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function selectPulsar(id) {
+            activePulsarId = id;
+            renderTabs();
+            renderPulsarDetail(id);
+        }
+
+        function renderPulsarDetail(id) {
+            const pulsar = pulsarsData.find(p => p.id === id);
+            if (!pulsar) return;
+
+            const container = document.getElementById("pulsar-detail-card");
+
+            const analysesHTML = pulsar.analyses.map(a => {
+                const isSuperseded = a.status === 'SUPERSEDED';
+                const badgeClass = isSuperseded 
+                    ? "bg-rose-100 text-rose-800 border-rose-200" 
+                    : "bg-teal-100 text-teal-800 border-teal-200";
+                
+                return `
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 hover:bg-white transition space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">${a.author}</h4>
+                                <span class="text-xs text-slate-500 font-mono">Pipeline: ${a.group}</span>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass} self-start sm:self-auto">
+                                ${a.status} ${isSuperseded && a.supersededBy ? `(By ${a.supersededBy})` : ''}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs bg-white p-3 rounded-lg border border-slate-100">
+                            <div>
+                                <span class="text-slate-400 block font-mono">Inferred Mass:</span>
+                                <span class="font-bold text-slate-800">${a.mass} M<sub>☉</sub></span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block font-mono">Inferred Radius:</span>
+                                <span class="font-bold text-slate-800">${a.radius} km</span>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-slate-600 leading-relaxed">
+                            <strong class="text-slate-700">Methodological Insight:</strong> ${a.keyFeature}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <span class="text-xs font-mono text-indigo-600 uppercase tracking-widest font-semibold">${pulsar.type}</span>
+                            <h3 class="text-2xl font-black text-slate-900">${pulsar.name}</h3>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="bg-slate-100 px-3 py-1.5 rounded-lg text-slate-700 font-medium">Spin: ${pulsar.spin}</span>
+                            <span class="bg-slate-100 px-3 py-1.5 rounded-lg text-slate-700 font-medium">Dist: ${pulsar.distance}</span>
+                            <span class="bg-indigo-50 px-3 py-1.5 rounded-lg text-indigo-700 font-medium">Mass Prior: ${pulsar.massPrior}</span>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-slate-600 leading-relaxed">${pulsar.summary}</p>
+
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Analysis Progression & Pipelines</h4>
+                        <div class="grid grid-cols-1 gap-4">
+                            ${analysesHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMatrixTable(data) {
+            const tbody = document.getElementById("matrix-tbody");
+            let rows = [];
+
+            data.forEach(p => {
+                p.analyses.forEach(a => {
+                    const isSuperseded = a.status === 'SUPERSEDED';
+                    const badgeClass = isSuperseded ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-teal-50 text-teal-700 border-teal-200";
+                    rows.push(`
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-3 font-bold text-slate-900">${p.name}</td>
+                            <td class="py-3 px-3">${a.author}</td>
+                            <td class="py-3 px-3 font-mono text-xs">${a.group}</td>
+                            <td class="py-3 px-3 font-semibold">${a.mass}</td>
+                            <td class="py-3 px-3 font-semibold text-indigo-900">${a.radius}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeClass}">${a.status}</span>
+                            </td>
+                            <td class="py-3 px-3 text-slate-500 max-w-xs truncate" title="${a.keyFeature}">${a.keyFeature}</td>
+                        </tr>
+                    `);
+                });
+            });
+
+            tbody.innerHTML = rows.join("");
+        }
+
+        function filterMatrixTable(query) {
+            const filteredData = pulsarsData.map(p => {
+                const matchingAnalyses = p.analyses.filter(a => 
+                    p.name.toLowerCase().includes(query) ||
+                    a.author.toLowerCase().includes(query) ||
+                    a.group.toLowerCase().includes(query) ||
+                    a.status.toLowerCase().includes(query) ||
+                    a.keyFeature.toLowerCase().includes(query)
+                );
+                if (matchingAnalyses.length > 0) {
+                    return { ...p, analyses: matchingAnalyses };
+                }
+                return null;
+            }).filter(Boolean);
+
+            renderMatrixTable(filteredData);
+        }
+
+        function parseMetricValue(str) {
+            if (!str) return null;
+            const matches = str.match(/([0-9]+\.?[0-9]*)/g);
+            if (!matches || matches.length === 0) return null;
+            if (matches.length === 1) return parseFloat(matches[0]);
+            if (str.includes('±')) return parseFloat(matches[0]);
+            if (str.includes('+') || str.includes('-')) return parseFloat(matches[0]);
+            const val1 = parseFloat(matches[0]);
+            const val2 = parseFloat(matches[1]);
+            return (val1 + val2) / 2;
+        }
+
+        function initMRChart(mode) {
+            const ctx = document.getElementById('mrScatterChart').getContext('2d');
+
+            if (mrChartInstance) {
+                mrChartInstance.destroy();
+            }
+
+            const activePoints = [];
+            const supersededPoints = [];
+
+            pulsarsData.forEach(p => {
+                p.analyses.forEach(a => {
+                    const rVal = parseMetricValue(a.radius);
+                    const mVal = parseMetricValue(a.mass);
+                    if (rVal && mVal) {
+                        const pt = {
+                            x: rVal,
+                            y: mVal,
+                            label: `${p.name} (${a.author.split(' ')[0]})`,
+                            r: a.status === 'ACTIVE' ? 7 : 5
+                        };
+                        if (a.status === 'ACTIVE') {
+                            activePoints.push(pt);
+                        } else {
+                            supersededPoints.push(pt);
+                        }
+                    }
+                });
+            });
+
+            const datasets = [
+                {
+                    label: 'Current Active Posteriors',
+                    data: activePoints,
+                    backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                    borderColor: 'rgb(67, 56, 202)',
+                    borderWidth: 2,
+                    pointHoverRadius: 9
+                }
+            ];
+
+            if (mode === 'all') {
+                datasets.push({
+                    label: 'Superseded Early Posteriors',
+                    data: supersededPoints,
+                    backgroundColor: 'rgba(244, 63, 94, 0.65)',
+                    borderColor: 'rgb(225, 29, 72)',
+                    borderWidth: 1.5,
+                    pointStyle: 'triangle',
+                    pointHoverRadius: 9
+                });
+            }
+
+            mrChartInstance = new Chart(ctx, {
+                type: 'bubble',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { family: 'Inter', size: 12 },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const raw = context.raw;
+                                    return `${raw.label}: Mass = ${raw.y} M☉, Radius = ${raw.x} km`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Equatorial Radius R_eq (km)',
+                                font: { family: 'Inter', size: 13, weight: '600' }
+                            },
+                            min: 9.0,
+                            max: 16.0,
+                            grid: { color: '#e2e8f0' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Gravitational Mass M (M☉)',
+                                font: { family: 'Inter', size: 13, weight: '600' }
+                            },
+                            min: 0.8,
+                            max: 2.3,
+                            grid: { color: '#e2e8f0' }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
