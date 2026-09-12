@@ -1,0 +1,178 @@
+[
+    {
+        "id": "j0030",
+        "name": "PSR J0030+0451",
+        "spin": "205 Hz",
+        "distance": "0.33 kpc",
+        "type": "Isolated MSP",
+        "massPrior": "Uninformative (X-ray only)",
+        "summary": "Isolated millisecond pulsar with no independent radio mass prior. Chronological re-analysis resolved severe spatial degeneracies by introducing XMM-Newton background priors.",
+        "analyses": [
+            {
+                "author": "Vinciguerra et al. (2024)",
+                "group": "X-PSI",
+                "mass": "1.40 ± 0.12",
+                "radius": "11.71 ± 0.85",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Incorporated XMM background priors; favored PDT spot geometry."
+            },
+            {
+                "author": "Riley et al. (2019) / Miller et al. (2019)",
+                "group": "X-PSI / IM",
+                "mass": "1.34 - 1.44",
+                "radius": "12.71 - 13.02",
+                "status": "SUPERSEDED",
+                "supersededBy": "Vinciguerra et al. (2024)",
+                "keyFeature": "Unconstrained background prior led to inflated radii."
+            }
+        ]
+    },
+    {
+        "id": "j0740",
+        "name": "PSR J0740+6620",
+        "spin": "346 Hz",
+        "distance": "1.14 kpc",
+        "type": "Binary MSP",
+        "massPrior": "2.08 ± 0.07 M_sun (Shapiro Delay)",
+        "summary": "One of the most massive known neutron stars. Radius places a strict lower boundary on EOS stiffness at extreme densities.",
+        "analyses": [
+            {
+                "author": "Salmi et al. (2024)",
+                "group": "X-PSI",
+                "mass": "2.073 ± 0.069",
+                "radius": "12.49 +1.28/-0.88",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Expanded 3.6-yr dataset. Excludes R < 11.15 km."
+            },
+            {
+                "author": "Dittmann et al. (2024)",
+                "group": "IM",
+                "mass": "2.073 ± 0.069",
+                "radius": "12.76 +1.49/-1.02",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Full 3.6-yr dataset analysis agreeing with X-PSI."
+            },
+            {
+                "author": "Riley et al. (2021) / Miller et al. (2021)",
+                "group": "X-PSI / IM",
+                "mass": "2.08 ± 0.07",
+                "radius": "12.39 - 13.70",
+                "status": "SUPERSEDED",
+                "supersededBy": "Salmi et al. (2024) / Dittmann et al. (2024)",
+                "keyFeature": "First empirical radius for a 2 M_sun pulsar."
+            }
+        ]
+    },
+    {
+        "id": "j0437",
+        "name": "PSR J0437−4715",
+        "spin": "173 Hz",
+        "distance": "0.15 kpc",
+        "type": "Binary MSP",
+        "massPrior": "1.418 ± 0.044 M_sun (Radio Shapiro)",
+        "summary": "Nearest and brightest MSP, subject to background contamination from an AGN.",
+        "analyses": [
+            {
+                "author": "Miller et al. (2025/2026)",
+                "group": "IM",
+                "mass": "1.418 ± 0.044",
+                "radius": "11.8 - 15.1",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Incorporated NuSTAR hard X-ray non-thermal emission component."
+            },
+            {
+                "author": "Choudhury et al. (2024)",
+                "group": "X-PSI",
+                "mass": "1.418 ± 0.044",
+                "radius": "11.36 +0.95/-0.63",
+                "status": "SUPERSEDED",
+                "supersededBy": "Miller et al. (2025/2026)",
+                "keyFeature": "Omitted magnetospheric non-thermal emission."
+            }
+        ]
+    },
+    {
+        "id": "j0614",
+        "name": "PSR J0614−3329",
+        "spin": "318 Hz",
+        "distance": "0.55 kpc",
+        "type": "Binary MSP",
+        "massPrior": "1.44 +0.06/-0.07 M_sun (Radio)",
+        "summary": "Edge-on MSP exhibiting extreme compactness.",
+        "analyses": [
+            {
+                "author": "Mauviard et al. (2025/2026)",
+                "group": "X-PSI",
+                "mass": "1.44 +0.06/-0.07",
+                "radius": "10.29 +1.01/-0.86",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Ultra-compact median (~10.3 km), supporting SQS physics."
+            }
+        ]
+    },
+    {
+        "id": "j1231",
+        "name": "PSR J1231−1411",
+        "spin": "272 Hz",
+        "distance": "0.42 kpc",
+        "type": "Binary MSP",
+        "massPrior": "Broad / Weak Radio Prior",
+        "summary": "Unusual pulse profile with weak interpulse.",
+        "analyses": [
+            {
+                "author": "Salmi et al. (2024)",
+                "group": "X-PSI",
+                "mass": "1.04 +0.05/-0.03",
+                "radius": "12.6 ± 0.3",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Primary collaboration analysis with restricted radius prior."
+            }
+        ]
+    },
+    {
+        "id": "j2124",
+        "name": "PSR J2124−3358",
+        "spin": "203 Hz",
+        "distance": "0.30 kpc",
+        "type": "Isolated MSP in PWN",
+        "massPrior": "Uninformative",
+        "summary": "Faintest NICER target, embedded in PWN.",
+        "analyses": [
+            {
+                "author": "González-Caniulef et al. (2026)",
+                "group": "X-PSI",
+                "mass": "1.8 ± 0.5",
+                "radius": "11.7 +2.6/-3.0",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Confirmed Helium atmospheric composition."
+            }
+        ]
+    },
+    {
+        "id": "j1614",
+        "name": "PSR J1614−2230",
+        "spin": "317 Hz",
+        "distance": "0.67 kpc",
+        "type": "Binary MSP",
+        "massPrior": "1.937 ± 0.014 M_sun (Shapiro Delay)",
+        "summary": "High mass pulsar exhibiting remarkable compactness.",
+        "analyses": [
+            {
+                "author": "Mauviard et al. (2026)",
+                "group": "X-PSI",
+                "mass": "1.937 ± 0.014",
+                "radius": "10.06 +1.25/-0.87",
+                "status": "ACTIVE",
+                "supersededBy": null,
+                "keyFeature": "Joint NICER/XMM/Chandra analysis showing compactness (~10.06 km)."
+            }
+        ]
+    }
+]
